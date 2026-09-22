@@ -1,35 +1,234 @@
 \documentclass{article}
 \usepackage[english]{babel}
-\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=2.5cm,right=2.5cm,marginparwidth=1.75cm]{geometry}
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage[numbers]{natbib}
-\usepackage{listings}
+\usepackage[section]{placeins}
+
+% Long \texttt object names (kNue2024FDAllSamples_Prod62024EffMatched etc.) cannot
+% hyphenate, so give TeX room to stretch a line rather than run into the margin.
+\setlength{\emergencystretch}{3em}
+
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+
+\graphicspath{{images-ssahoo/}}
+
+% ---------------------------------------------------------------------------
+% Figure helpers. The plots are a selection from the talk (NOVA-doc-70698);
+% that reference has the full set, covering every sample and both estimators.
+% ---------------------------------------------------------------------------
+% \twofig{a}{b}{caption}{label}          -- one row of two
+\newcommand{\twofig}[4]{%
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.46\textwidth]{#1}\hfill
+  \includegraphics[width=0.46\textwidth]{#2}
+  \caption{#3}\label{#4}
+\end{figure}}
+% \threefig{a}{b}{c}{caption}{label}     -- one row of three
+\newcommand{\threefig}[5]{%
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.315\textwidth]{#1}\hfill
+  \includegraphics[width=0.315\textwidth]{#2}\hfill
+  \includegraphics[width=0.315\textwidth]{#3}
+  \caption{#4}\label{#5}
+\end{figure}}
+% \fourfig{tl}{tr}{bl}{br}{caption}{label} -- two rows of two
+\newcommand{\fourfig}[6]{%
+\begin{figure}[htbp]\centering
+  \includegraphics[width=0.46\textwidth]{#1}\hfill
+  \includegraphics[width=0.46\textwidth]{#2}\\[2pt]
+  \includegraphics[width=0.46\textwidth]{#3}\hfill
+  \includegraphics[width=0.46\textwidth]{#4}
+  \caption{#5}\label{#6}
+\end{figure}}
 
 \title{NOvA Production 6 Validation Task Force Contribution Summary}
-\author{Your Name Here}
+\author{Subhadarsi Sahoo}
 
 \begin{document}
 \maketitle
 
 \section{Task Description}
-When referring to specific studies / specific plots, please include the relevant docdb citation.
-Figure~\ref{fig:ssahoo-image-example} shows an example of how to include an image from the \texttt{images-ssahoo} directory.
 
-\begin{figure}[htbp]
-    \centering
-    \IfFileExists{images-ssahoo/example-image.png}{%
-        \includegraphics[width=0.7\textwidth]{images-ssahoo/example-image.png}%
-    }{%
-        \fbox{\parbox[c][0.25\textheight][c]{0.7\textwidth}{\centering Example image placeholder from \texttt{images-ssahoo/example-image.png}}}%
-    }
-    \caption{Example figure showing how to include an image from the \texttt{images-ssahoo} directory.}
-    \label{fig:ssahoo-image-example}
-\end{figure}
+My contribution to the Production~6 Validation Task Force was to validate the
+\textbf{electron-neutrino energy estimators}: the \textbf{Spline}
+(\texttt{kNueEnergy2024\_Prod6}), a quadratic fit in the EM and hadronic
+calorimetric energies with separate FHC and RHC fits, and the \textbf{regression
+CNN} (\texttt{regCVNNueE}, reading \texttt{energy.nue.regcvnEvtE}), an end-to-end
+network trained on Prod6. Both are filled from the same selected events with the
+same weight, so the comparison is unbiased by construction.
+
+Eight Prod6 samples were processed: six \textbf{nominal} MC samples --- ND
+FHC/RHC, and FD FHC/RHC non-swap and flux-swap --- together with ND FHC/RHC
+\emph{data}. The MC is nominal throughout, with no systematically shifted
+samples. The selection is the official Ana2024
+Prod6 chain --- \texttt{kNue2024ND\_\allowbreak Prod62024EffMatched} at the ND and
+\texttt{kNue2024FDAllSamples\_\allowbreak Prod62024EffMatched} (core $\cup$ peripheral) at the
+FD --- with \texttt{kPPFXFluxCVWgt} on MC and \texttt{kUnitWeight} on data. No
+cross-section CV tune is applied: none exists for Prod6
+(\texttt{kXSecCVWgt2024} throws \texttt{Unsupported\allowbreak GeneratorException} on this
+GENIE), so PPFX-only is the agreed recipe.
+
+The benchmarks are energy spectra, resolution, bias and width
+against true energy, migration matrices, the true-interaction-type composition
+(including per PID bin), and ND data/MC. The work was reported in
+Refs.~\cite{docdb-70195, docdb-69940, docdb-70459, docdb-70698}. The figures
+below are a representative selection; the full set, covering every sample and
+both estimators, is in Ref.~\cite{docdb-70698}.
+
+\section{Findings}
+
+\paragraph{Energy spectra, bias and resolution.}
+Both estimators reconstruct the $\nu_e$ energy well in all six MC samples, and
+their spectra and resolutions are reasonable throughout. The CNN has the narrower
+core resolution in every sample. It is also the less biased of the two in five of
+the six; the exception is FHC FD flux-swap, where both sit within a fraction of a
+percent of zero and the Spline is nominally the closer --- so the CNN cannot
+simply be described as less biased everywhere. The flux-swap samples resolve
+better than the non-swap ones, as expected for a pure signal $\nu_e$ sample
+compared with one containing NC $\pi^0$ background. Both estimators are near-unbiased at low energy and
+increasingly under-reconstruct towards the top of the selection window; this is
+an acceptance effect, since the window is applied in reconstructed energy, rather
+than a failure of either estimator. Bias and width are quoted from an iterative
+$\pm2\sigma$ core fit rather than a full-range fit, which is dragged by the
+low-side tail and describes neither the core nor the tail; earlier talks quoted
+the full-range RMS, which is the same distribution under a different summary
+statistic and should not be compared with the core width.
+
+\paragraph{True-interaction-type composition.}
+The composition of the selected sample was determined for every sample, both
+overall and split by PID bin. The ND and FD non-swap selections are roughly half
+$\nu_e$~CC in FHC and closer to two thirds in RHC, with the remainder dominated
+by NC $\pi^0$. RHC is the purer at both detectors because the antineutrino beam
+carries far less $\nu_\mu$ to be mistaken for signal. The FD flux-swap samples
+are almost entirely $\nu_e$~CC by construction. At the FD, purity rises with PID score in every
+sample, with the peripheral sample falling between the two core bins. The truth
+categories were defined to be exhaustive and mutually exclusive so that they sum
+to unity by construction, which provides a built-in check on every composition
+plot; the official \texttt{TruthCuts} were deliberately not used because they do
+not form a partition.
+
+\paragraph{ND data/MC.}
+Data lies above MC in both beams, by roughly 20\% in FHC and 33\% in RHC, using
+the same selection on data and MC with the MC POT-scaled to the data exposure.
+The excess is beam-dependent, which disfavours a detector effect since that
+would be common to both beams. Further study will depend on the cross-section
+tuning once it exists for Prod6.
+
+\paragraph{Issues found that affect other Prod6 users.}
+\begin{itemize}
+  \setlength{\itemsep}{1pt}
+  \item \textbf{Most of the official \texttt{SharedPlotLists} $\nu_e$ variables do
+  not work on Prod6.} Of the 63 registered, \textbf{49 place $100\%$ of events in
+  the underflow bin}, in every sample at both detectors --- they are 2020-era
+  \texttt{Var}s reading pre-Prod6 branches, and \texttt{sel.cvn2d} does not exist
+  in these CAFs at all. They fail silently, so the plots are produced and look
+  empty rather than raising an error. The remaining 14 read branches that do
+  exist in Prod6 and are fine.
+  \item \textbf{The stock \texttt{kLongestProng} returns 0 for every Prod6
+  event}, because it reads the pre-Prod6 \texttt{vtx.elastic} path.
+  \texttt{kLongestProng\_Prod6} must be used instead. A \texttt{Var} reading a
+  missing branch does not error --- it returns 0 and the cut silently rejects
+  everything, which is the common root cause of this item and the one above.
+  \item \textbf{\texttt{regcvnEvtE\_opphorn} is bit-identical to
+  \texttt{regcvnEvtE}} in Prod6 --- no bin of the two distributions differs. The
+  branch duplicates the nominal rather than carrying an independently trained
+  network, so the horn-training robustness check for the $\nu_e$ CNN cannot be
+  performed with Prod6 CAFs; a naive comparison would report perfect robustness.
+  Only the $\nu_e$ branch was checked.
+  \item \textbf{There is no Prod6 $\nu_e$ analysis axis and no
+  \texttt{Prod6Loaders.h}.} All four axis and analysis-bin symbols in
+  \texttt{NueCuts2024.h} are pre-Prod6, and the pre-Prod6 axis cannot simply be
+  reused on Prod6 files: it applies the original PID edges rather than the
+  Prod6-retuned \texttt{\_Prod62024EffMatched} values, so events would be binned
+  by a different selection than the one applied, silently. A Prod6 analysis bin
+  with a matching axis, plus Prod6 loaders, would unblock Prod6 $\nu_e$
+  predictions generally.
+\end{itemize}
+
+\paragraph{Future work.}
+The Spline still carries the Ana2024 (Prod5.1) coefficients, so a good part of
+its residual bias on Prod6 is simply those coefficients applied to a different
+production. Retuning the polynomial on Prod6 is the immediate next task; it
+should reduce that bias, and it will also make the comparison with the CNN a fair
+one, since the CNN is already trained on Prod6. A Prod6 FD prediction using
+\texttt{PredictionNoExtrap}, built from official CAFAna classes because the
+official prediction chain cannot be pointed at Prod6, has been written and
+validated but not yet run. Systematic uncertainties have not yet been studied
+for these estimators.
+
+\clearpage
+\section{Near Detector}
+
+\fourfig{energy_fhc_nd.png}{energy_rhc_nd.png}{res_fhc_nd.png}{res_rhc_nd.png}
+{Reconstructed $\nu_e$ energy (top) and fractional resolution
+$(E_{\rm reco}-E_{\rm true})/E_{\rm true}$ (bottom) at the ND, FHC left and RHC
+right, for truth, Spline and CNN. RHC looks spikier only because it has a fifth
+of the statistics; $\chi^2/$ndf $\approx1$ against a smooth reference.}
+{fig:nd-energy-res}
+
+\twofig{mean_fhc_nd.png}{std_fhc_nd.png}
+{Bias (left) and width (right) of the fractional residual against true energy,
+FHC ND. Both estimators are near-unbiased below $\sim$1.5~GeV and increasingly
+under-reconstruct above $\sim$4~GeV, where the selection window truncates the
+sample.}{fig:nd-bias-width}
+
+\twofig{ts_sp_fhc_nd.png}{ts_sp_rhc_nd.png}
+{ND composition by true interaction type, FHC left and RHC right, on the Spline
+energy axis. The CNN gives an identical composition, as it must --- the same
+events are selected, only the energy axis differs --- so only one estimator is
+shown.}{fig:nd-composition}
+
+\clearpage
+\section{Near Detector data/MC}
+
+\fourfig{dmc_spl_fhc.png}{dmc_spl_rhc.png}{dmc_cnn_fhc.png}{dmc_cnn_rhc.png}
+{Reconstructed $\nu_e$ energy, data over MC, POT-scaled: Spline top, CNN bottom;
+FHC left, RHC right.}{fig:nd-datamc-energy}
+
+\clearpage
+\section{Far Detector}
+
+\fourfig{energy_fhc_fd_nonswap.png}{energy_fhc_fd_fluxswap.png}
+        {energy_rhc_fd_nonswap.png}{energy_rhc_fd_fluxswap.png}
+{FD reconstructed $\nu_e$ energy: non-swap (beam) left, flux-swap (appearance
+signal) right; FHC top, RHC bottom.}{fig:fd-energy}
+
+\fourfig{res_fhc_fd_nonswap.png}{res_fhc_fd_fluxswap.png}
+        {res_rhc_fd_nonswap.png}{res_rhc_fd_fluxswap.png}
+{FD fractional resolution $(E_{\rm reco}-E_{\rm true})/E_{\rm true}$, same layout
+as Fig.~\ref{fig:fd-energy}: non-swap left, flux-swap right; FHC top, RHC bottom.
+The flux-swap samples are visibly narrower, as expected for a pure signal $\nu_e$
+sample against one containing NC $\pi^0$ background.}{fig:fd-resolution}
+
+\twofig{ts_sp_fhc_fd_nonswap.png}{ts_sp_rhc_fd_nonswap.png}
+{FD non-swap composition, FHC left and RHC right, again on the Spline axis only.
+The beam sample is background-rich, with the same mix as the ND.}
+{fig:fd-comp-nonswap}
+
+\twofig{ts_sp_fhc_fd_fluxswap.png}{ts_sp_rhc_fd_fluxswap.png}
+{FD flux-swap composition, FHC left and RHC right. The appearance-signal sample
+is almost entirely $\nu_e$~CC by construction --- the flux-swap replaces the
+$\nu_\mu$ flux with $\nu_e$, leaving almost nothing to be mistaken for signal.}
+{fig:fd-comp-fluxswap}
+
+\threefig{pidstack_fhc_fd_nonswap_CVNeLow.png}{pidstack_fhc_fd_nonswap_CVNeHigh.png}{pidstack_fhc_fd_nonswap_Peripheral.png}
+{Composition per PID bin, FHC FD non-swap, with the purities in the legends:
+$16.9\%$ (CVNe-Low), $74.2\%$ (CVNe-High) and $43.7\%$ (Peripheral) $\nu_e$~CC.
+Purity rises with PID score in every sample; the peripheral sample falls between
+the two core bins because it is uncontained, so it accepts events the core
+rejects.}{fig:fd-pidstack}
+
+\threefig{pidstack_fhc_fd_fluxswap_CVNeLow.png}{pidstack_fhc_fd_fluxswap_CVNeHigh.png}{pidstack_fhc_fd_fluxswap_Peripheral.png}
+{Composition per PID bin, FHC FD flux-swap. Every bin is near-pure, but the trend
+survives: the loose CVNe-Low bin still carries the most background, a couple of
+percent NC, and the tight CVNe-High bin is the purest.}{fig:fd-pidstack-fluxswap}
 
 \section{A Complete List of Relevant Docdbs with Citations Including URL}
-For example, see ~\cite{2021-06-29-retriggering-summary}.
 
 \bibliographystyle{unsrtnat}
 \bibliography{summary-ssahoo}
